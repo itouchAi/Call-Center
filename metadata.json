@@ -1,0 +1,8 @@
+{
+  "name": "Call Center 3D KPI Analytics \u0026 Scaling Engine v6",
+  "description": "Advanced 3D interactive call center KPI calculation, personnel performance tracking, multi-file Excel/CSV telemetry parser, head-to-head comparison, and AI-driven growth recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
