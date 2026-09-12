@@ -10,6 +10,7 @@ import { DailyMetricDetailModal, MetricDetailType } from './DailyMetricDetailMod
 import { CallStatusRecordsModal } from './CallStatusRecordsModal';
 import { InteractiveKPIHeaderFilter } from './InteractiveKPIHeaderFilter';
 import { StaffSelectionModal } from './StaffSelectionModal';
+import { BulkAvatarUploadModal } from './BulkAvatarUploadModal';
 import { 
   Camera, TrendingUp, AlertTriangle, Lightbulb, Clock, CheckCircle2, 
   BarChart2, ShieldCheck, UserCheck, PhoneCall,
@@ -36,6 +37,7 @@ interface PersonnelKPIViewProps {
   detectedHeaders?: string[];
   displayedStaffIds?: string[];
   onUpdateDisplayedStaffIds?: (newIds: string[]) => void;
+  onUpdateStaffList?: (updatedStaff: StaffMember[]) => void;
 }
 
 export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
@@ -56,8 +58,12 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
   detectedHeaders,
   displayedStaffIds,
   onUpdateDisplayedStaffIds,
+  onUpdateStaffList,
 }) => {
   const t = getT(language);
+
+  // Bulk Avatar Upload Modal State
+  const [isBulkAvatarModalOpen, setIsBulkAvatarModalOpen] = useState<boolean>(false);
 
   // Staff Selection Modal State (User Rule: Up to 6 staff members shown on main screen, "Tüm Liste" button to select)
   const [isStaffSelectModalOpen, setIsStaffSelectModalOpen] = useState<boolean>(false);
@@ -415,6 +421,15 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
                 Personel Kadrosu ({displayedStaff.length} Kişi)
               </h3>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsBulkAvatarModalOpen(true)}
+              className="flex items-center space-x-1.5 rounded-lg border border-cyan-500/40 bg-cyan-950/60 hover:bg-cyan-900/80 px-2.5 py-1 text-xs font-semibold text-cyan-300 hover:text-white transition-all shadow-sm shadow-cyan-500/10 active:scale-95"
+              title="Temsilcilerin profil fotoğraflarını toplu yükleyin ve eşleştirin"
+            >
+              <Camera className="h-3.5 w-3.5 text-cyan-400" />
+              <span>Fotoğrafları Sabitle</span>
+            </button>
             {staffList.length > 6 && (
               <button
                 type="button"
@@ -534,22 +549,21 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
       >
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
-            <div className="relative group">
+            <div className="relative group cursor-pointer" onClick={() => onEditStaff(selectedStaff)}>
               <img
                 src={selectedStaff.avatar}
                 alt={selectedStaff.name}
                 referrerPolicy="no-referrer"
-                className="h-20 w-20 rounded-2xl object-cover border-2 shadow-xl"
+                className="h-20 w-20 rounded-2xl object-cover border-2 shadow-xl transition-transform group-hover:scale-105"
                 style={{ borderColor: selectedStaff.color }}
               />
-              <button
-                type="button"
-                onClick={() => onEditStaff(selectedStaff)}
-                className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-xs text-white cursor-pointer"
-                title={t.uploadPhoto}
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-xs text-white p-1 text-center"
+                title="Görseli değiştir / Yeni fotoğraf yükle"
               >
-                <Camera className="h-6 w-6 text-white" />
-              </button>
+                <Camera className="h-5 w-5 text-cyan-300 mb-0.5" />
+                <span className="text-[9px] font-bold text-cyan-100">Değiştir</span>
+              </div>
             </div>
 
             <div>
@@ -1221,6 +1235,18 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
         timeFilter={timeFilter}
         theme={theme}
         language={language}
+      />
+
+      {/* Bulk Avatar Upload and Auto-Matching Modal */}
+      <BulkAvatarUploadModal
+        isOpen={isBulkAvatarModalOpen}
+        onClose={() => setIsBulkAvatarModalOpen(false)}
+        staffList={staffList}
+        onSaveStaffList={(updated) => {
+          if (onUpdateStaffList) {
+            onUpdateStaffList(updated);
+          }
+        }}
       />
     </div>
   );

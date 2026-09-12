@@ -1,5 +1,5 @@
 import { StaffMember, CallRecord, CallCenterHourlyMetric, CloudBackupData, CacheTelemetry, AppTheme, RenderMode, Language, TimeFilter } from '../types';
-import { INITIAL_STAFF_MEMBERS, RAW_CRM_RECORDS, RAW_HOURLY_METRICS, deduplicateStaffList } from '../data/defaultDatasets';
+import { INITIAL_STAFF_MEMBERS, RAW_CRM_RECORDS, RAW_HOURLY_METRICS, deduplicateStaffList, areStaffNamesEquivalent } from '../data/defaultDatasets';
 
 const STORAGE_KEYS = {
   STAFF: 'cc_kpi_staff_members_v2',
@@ -85,7 +85,39 @@ export function loadStaffMembers(): StaffMember[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const sanitized = deduplicateStaffList(parsed);
+        // Merge with INITIAL_STAFF_MEMBERS to ensure newly registered core staff and fixed representative photos are preserved
+        const merged: StaffMember[] = INITIAL_STAFF_MEMBERS.map(initStaff => {
+          const match = parsed.find((p: StaffMember) => 
+            p.id === initStaff.id || 
+            areStaffNamesEquivalent(p.name, initStaff.name) ||
+            (p.name && initStaff.name && p.name.toLowerCase().trim() === initStaff.name.toLowerCase().trim())
+          );
+          if (match) {
+            // If the saved avatar is an old unsplash placeholder or generic online photo, replace it with the fixed avatar
+            const isOldUnsplash = match.avatar && (
+              match.avatar.includes('images.unsplash.com') ||
+              match.avatar.includes('unsplash')
+            );
+            const finalAvatar = (!match.avatar || isOldUnsplash) ? initStaff.avatar : match.avatar;
+
+            return {
+              ...initStaff,
+              ...match,
+              name: initStaff.name, // Keep canonical staff name
+              avatar: finalAvatar,
+            };
+          }
+          return initStaff;
+        });
+
+        // Also keep any custom staff members user might have added (that aren't the core 6)
+        parsed.forEach((p: StaffMember) => {
+          if (!merged.some(m => m.id === p.id || areStaffNamesEquivalent(m.name, p.name))) {
+            merged.push(p);
+          }
+        });
+
+        const sanitized = deduplicateStaffList(merged);
         if (sanitized.length > 0) {
           try {
             localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(sanitized));

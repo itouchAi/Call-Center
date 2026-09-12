@@ -4,10 +4,10 @@ import { isValidCategoryString } from '../utils/excelParser';
 export const INITIAL_STAFF_MEMBERS: StaffMember[] = [
   {
     id: 'staff-1',
-    name: 'Büşra Öztürk Yaman',
+    name: 'Büşra Yaman Öztürk',
     title: 'Kıdemli Teknik Destek Uzmanı',
     role: 'Senior Technical Support',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+    avatar: '/avatars/busra_yaman.jpg',
     email: 'busra.yaman@callcenter.com',
     extension: '4101',
     status: 'in-call',
@@ -21,7 +21,7 @@ export const INITIAL_STAFF_MEMBERS: StaffMember[] = [
     name: 'Oğuzhan Kars',
     title: 'Ağ & Sistem Destek Mühendisi',
     role: 'Network Support Engineer',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    avatar: '/avatars/oguzhan_kars.jpg',
     email: 'oguzhan.kars@callcenter.com',
     extension: '4102',
     status: 'available',
@@ -35,7 +35,7 @@ export const INITIAL_STAFF_MEMBERS: StaffMember[] = [
     name: 'Muhammed Arda',
     title: 'Kurumsal Çözüm & Çağrı Lideri',
     role: 'Enterprise Solutions Lead',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+    avatar: '/avatars/muhammed_arda.jpg',
     email: 'muhammed.arda@callcenter.com',
     extension: '4103',
     status: 'available',
@@ -49,7 +49,7 @@ export const INITIAL_STAFF_MEMBERS: StaffMember[] = [
     name: 'Zeynep Nur Durmaz',
     title: 'Müşteri Deneyimi & Ağ Destek Uzmanı',
     role: 'Customer Experience Specialist',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
+    avatar: '/avatars/zeynep_durmaz.jpg',
     email: 'zeynep.durmaz@callcenter.com',
     extension: '4104',
     status: 'acw',
@@ -63,7 +63,7 @@ export const INITIAL_STAFF_MEMBERS: StaffMember[] = [
     name: 'Feyza Nur Sertkaya',
     title: 'Müşteri Temsilcisi & Ürün Danışmanı',
     role: 'Customer Care Representative',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+    avatar: '/avatars/feyza_sertkaya.jpg',
     email: 'feyzanur.sertkaya@callcenter.com',
     extension: '4105',
     status: 'in-call',
@@ -74,17 +74,17 @@ export const INITIAL_STAFF_MEMBERS: StaffMember[] = [
   },
   {
     id: 'staff-6',
-    name: 'Ahmet Berkay Dibet',
-    title: 'L2 Destek & Teknik Servis Uzmanı',
-    role: 'L2 Escalation & RMA Specialist',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
-    email: 'ahmet.dibet@callcenter.com',
+    name: 'Aynzeliha Şahin',
+    title: 'Müşteri Hizmetleri & Çağrı Danışmanı',
+    role: 'Customer Care Specialist',
+    avatar: '/avatars/aynzeliha_sahin.jpg',
+    email: 'aynzeliha.sahin@callcenter.com',
     extension: '4106',
-    status: 'break',
+    status: 'available',
     color: '#f59e0b', // Amber
     bio: '',
-    joinDate: '2021-04-12',
-    skills: ['L2 Yazılı Destek', 'VIGI NVR Güvenlik', 'ONT Donanım Testi', 'RMA Arıza Analizi'],
+    joinDate: '2022-09-01',
+    skills: ['Müşteri Memnuniyeti', 'Hızlı Teşhis', 'Tapo Destek', 'İlk Temas Çözümü'],
   },
 ];
 
@@ -642,9 +642,18 @@ export function extractStaffFromRecords(records: CallRecord[], existingStaff: St
 
     if (existing && !usedIds.has(existing.id)) {
       usedIds.add(existing.id);
+
+      const initialMatched = INITIAL_STAFF_MEMBERS.find(
+        im => areStaffNamesEquivalent(im.name, group.canonicalName) ||
+              group.rawNames.some(rn => areStaffNamesEquivalent(im.name, rn))
+      );
+      const isOldUnsplash = existing.avatar && existing.avatar.includes('images.unsplash.com');
+      const avatarToUse = (isOldUnsplash && initialMatched) ? initialMatched.avatar : existing.avatar;
+
       staffList.push({
         ...existing,
         name: existing.name || group.canonicalName,
+        avatar: avatarToUse,
         email: group.email || existing.email,
         extension: group.extension || existing.extension,
         skills: existing.skills && existing.skills.length > 0 ? existing.skills : skills,
@@ -677,12 +686,20 @@ export function extractStaffFromRecords(records: CallRecord[], existingStaff: St
     const associatedEmail = group.email || `${cleanEmail}@callcenter.com`;
     const associatedExt = group.extension || `${4101 + idx}`;
 
+    // Determine default fixed avatar from INITIAL_STAFF_MEMBERS if available
+    const initialMatched = INITIAL_STAFF_MEMBERS.find(
+      im => areStaffNamesEquivalent(im.name, group.canonicalName) ||
+            group.rawNames.some(rn => areStaffNamesEquivalent(im.name, rn))
+    );
+
+    const defaultAvatar = initialMatched?.avatar || AVATAR_POOL[idx % AVATAR_POOL.length];
+
     staffList.push({
       id: candidateId,
       name: group.canonicalName,
       title: (existing && existing.title) || title,
       role: (existing && existing.role) || 'Çağrı Merkezi Uzmanı',
-      avatar: (existing && existing.avatar) || AVATAR_POOL[idx % AVATAR_POOL.length],
+      avatar: (existing && existing.avatar && !existing.avatar.includes('images.unsplash.com')) ? existing.avatar : defaultAvatar,
       email: (existing && existing.email) || associatedEmail,
       extension: (existing && existing.extension) || associatedExt,
       status: (existing && existing.status) || (idx % 3 === 0 ? 'in-call' : idx % 3 === 1 ? 'available' : 'acw'),

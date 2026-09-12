@@ -111,6 +111,13 @@ export default function App() {
     setCloudBackup(backup);
   };
 
+  const handleUpdateStaffList = (updatedList: StaffMember[]) => {
+    setStaffList(updatedList);
+    saveStaffMembers(updatedList);
+    const backup = triggerCloudAutoBackup();
+    setCloudBackup(backup);
+  };
+
   const handleRecalculateData = () => {
     setIsRecalculating(true);
     setRecalcNotice(t.recalculatingMessage);
@@ -353,6 +360,7 @@ export default function App() {
               detectedHeaders={detectedHeaders}
               displayedStaffIds={displayedStaffIds}
               onUpdateDisplayedStaffIds={handleUpdateDisplayedStaffIds}
+              onUpdateStaffList={handleUpdateStaffList}
             />
           )}
 

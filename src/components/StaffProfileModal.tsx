@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { StaffMember, Language } from '../types';
 import { getT } from '../utils/translations';
-import { X, Camera, Save, User, Mail, Phone, Tag, Check } from 'lucide-react';
+import { INITIAL_STAFF_MEMBERS } from '../data/defaultDatasets';
+import { X, Camera, Save, User, Mail, Phone, Tag, Check, RotateCcw, Upload } from 'lucide-react';
 
 interface StaffProfileModalProps {
   isOpen: boolean;
@@ -11,15 +12,15 @@ interface StaffProfileModalProps {
   language: Language;
 }
 
-const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80',
+const PRESET_ILLUSTRATED_AVATARS = [
+  'https://api.dicebear.com/7.x/bottts/svg?seed=tech1&backgroundColor=0284c7',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=support2&backgroundColor=7c3aed',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=agent3&backgroundColor=059669',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=network4&backgroundColor=d97706',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=cyber5&backgroundColor=db2777',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=voice6&backgroundColor=2563eb',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=datacenter7&backgroundColor=4f46e5',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=pulse8&backgroundColor=0d9488',
 ];
 
 export const StaffProfileModal: React.FC<StaffProfileModalProps> = ({
@@ -32,12 +33,19 @@ export const StaffProfileModal: React.FC<StaffProfileModalProps> = ({
   const t = getT(language);
   if (!isOpen || !staff) return null;
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Find the fixed default photo for this staff member
+  const defaultStaffPhoto = INITIAL_STAFF_MEMBERS.find(
+    s => s.id === staff.id || s.name.toLowerCase().trim() === staff.name.toLowerCase().trim()
+  )?.avatar || staff.avatar;
+
   const [name, setName] = useState(staff.name);
   const [title, setTitle] = useState(staff.title);
   const [role, setRole] = useState(staff.role);
   const [email, setEmail] = useState(staff.email);
   const [extension, setExtension] = useState(staff.extension);
-  const [avatar, setAvatar] = useState(staff.avatar);
+  const [avatar, setAvatar] = useState(staff.avatar || defaultStaffPhoto);
   const [bio, setBio] = useState(staff.bio || '');
   const [skillsStr, setSkillsStr] = useState(staff.skills.join(', '));
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -99,45 +107,91 @@ export const StaffProfileModal: React.FC<StaffProfileModalProps> = ({
               src={avatar}
               alt={name}
               referrerPolicy="no-referrer"
-              className="h-24 w-24 rounded-3xl object-cover border-4 shadow-xl"
+              className="h-24 w-24 rounded-3xl object-cover border-4 shadow-xl cursor-pointer"
               style={{ borderColor: staff.color }}
+              onClick={() => fileInputRef.current?.click()}
             />
-            <label className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white text-center p-1">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white text-center p-1"
+            >
               <Camera className="h-6 w-6 text-cyan-300" />
-              <span className="text-[10px] font-bold mt-1">Yükle (PNG/JPG)</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageFileChange}
-                className="hidden"
-              />
-            </label>
-          </div>
-
-          <label className="mt-2 text-xs text-cyan-400 hover:underline cursor-pointer font-semibold">
-            Bilgisayardan Fotoğraf Seç
+              <span className="text-[10px] font-bold mt-1">Yeni Görsel Yükle</span>
+            </button>
             <input
+              ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.jfif,.jpeg,.jpg,.png"
               onChange={handleImageFileChange}
               className="hidden"
             />
-          </label>
+          </div>
 
-          {/* Quick Preset Selector */}
-          <div className="flex items-center space-x-2 mt-3 overflow-x-auto max-w-full py-1">
-            {PRESET_AVATARS.map((p, idx) => (
-              <img
-                key={idx}
-                src={p}
-                alt="preset"
-                referrerPolicy="no-referrer"
-                onClick={() => setAvatar(p)}
-                className={`h-8 w-8 rounded-full object-cover cursor-pointer border-2 transition-all ${
-                  avatar === p ? 'border-cyan-400 scale-110' : 'border-transparent opacity-60 hover:opacity-100'
+          <div className="flex items-center space-x-3 mt-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer font-semibold flex items-center space-x-1"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              <span>Görsel Yükle (JFIF / JPEG / PNG)</span>
+            </button>
+
+            {avatar !== defaultStaffPhoto && (
+              <button
+                type="button"
+                onClick={() => setAvatar(defaultStaffPhoto)}
+                className="text-xs text-slate-400 hover:text-white flex items-center space-x-1 transition-colors"
+                title="Temsilcinin orijinal sabit fotoğrafına geri dön"
+              >
+                <RotateCcw className="h-3 w-3" />
+                <span>Orijinal Fotoğraf</span>
+              </button>
+            )}
+          </div>
+
+          {/* Quick Illustrated Non-Human Avatar Presets */}
+          <div className="w-full mt-4 pt-3 border-t border-white/10">
+            <p className="text-[11px] text-slate-400 text-center mb-2 font-medium">
+              Veya Alternatif Dijital Avatar Seçin (Gerçek İnsan İçermez)
+            </p>
+            <div className="flex items-center justify-center space-x-2 overflow-x-auto max-w-full py-1">
+              {/* First option: Original Real Photo */}
+              <div
+                onClick={() => setAvatar(defaultStaffPhoto)}
+                className={`relative shrink-0 cursor-pointer rounded-full transition-all ${
+                  avatar === defaultStaffPhoto ? 'ring-2 ring-cyan-400 scale-110' : 'opacity-70 hover:opacity-100'
                 }`}
-              />
-            ))}
+                title="Orijinal Temsilci Fotoğrafı"
+              >
+                <img
+                  src={defaultStaffPhoto}
+                  alt="original"
+                  referrerPolicy="no-referrer"
+                  className="h-8 w-8 rounded-full object-cover border border-cyan-500/50"
+                />
+              </div>
+
+              {/* Illustrated Presets */}
+              {PRESET_ILLUSTRATED_AVATARS.map((p, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setAvatar(p)}
+                  className={`relative shrink-0 cursor-pointer rounded-full transition-all ${
+                    avatar === p ? 'ring-2 ring-cyan-400 scale-110' : 'opacity-60 hover:opacity-100'
+                  }`}
+                  title="Dijital Robot/Teknoloji Avatarı"
+                >
+                  <img
+                    src={p}
+                    alt={`preset-${idx}`}
+                    referrerPolicy="no-referrer"
+                    className="h-8 w-8 rounded-full bg-slate-800 p-0.5 border border-white/20"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
