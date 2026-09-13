@@ -1,90 +1,97 @@
 import { StaffMember, CallRecord, CallCenterHourlyMetric, StaffKPIData } from '../types';
 import { isValidCategoryString } from '../utils/excelParser';
 
+import busraAvatar from '../assets/images/busra_yaman_1789206179385.jpg';
+import oguzhanAvatar from '../assets/images/oguzhan_kars_1789206167661.jpg';
+import muhammedAvatar from '../assets/images/muhammed_arda_1789206191507.jpg';
+import zeynepAvatar from '../assets/images/zeynep_durmaz_1789206207159.jpg';
+import feyzaAvatar from '../assets/images/feyza_sertkaya_1789206221513.jpg';
+import aynzelihaAvatar from '../assets/images/aynzeliha_sahin_1789206233962.jpg';
+
 export const INITIAL_STAFF_MEMBERS: StaffMember[] = [
   {
     id: 'staff-1',
     name: 'Büşra Yaman Öztürk',
-    title: 'Kıdemli Teknik Destek Uzmanı',
-    role: 'Senior Technical Support',
-    avatar: '/avatars/busra_yaman.jpg',
+    title: 'Müşteri Temsilcisi',
+    role: 'Müşteri Temsilcisi',
+    avatar: busraAvatar,
     email: 'busra.yaman@callcenter.com',
     extension: '4101',
     status: 'in-call',
     color: '#06b6d4', // Cyan
     bio: '',
     joinDate: '2022-03-15',
-    skills: ['Aginet xDSL', 'Tapo Kameralar', 'Webchat Çözümleri', 'RMA Yönetimi'],
+    skills: [],
   },
   {
     id: 'staff-2',
     name: 'Oğuzhan Kars',
-    title: 'Ağ & Sistem Destek Mühendisi',
-    role: 'Network Support Engineer',
-    avatar: '/avatars/oguzhan_kars.jpg',
+    title: 'Müşteri Temsilcisi',
+    role: 'Müşteri Temsilcisi',
+    avatar: oguzhanAvatar,
     email: 'oguzhan.kars@callcenter.com',
     extension: '4102',
     status: 'available',
     color: '#3b82f6', // Blue
     bio: '',
     joinDate: '2021-08-10',
-    skills: ['Omada Wi-Fi 7', 'DSL Hat Optimizasyonu', 'VR Serisi Routerlar', 'Omada SDN'],
+    skills: [],
   },
   {
     id: 'staff-3',
     name: 'Muhammed Arda',
-    title: 'Kurumsal Çözüm & Çağrı Lideri',
-    role: 'Enterprise Solutions Lead',
-    avatar: '/avatars/muhammed_arda.jpg',
+    title: 'Müşteri Temsilcisi',
+    role: 'Müşteri Temsilcisi',
+    avatar: muhammedAvatar,
     email: 'muhammed.arda@callcenter.com',
     extension: '4103',
     status: 'available',
     color: '#8b5cf6', // Violet
     bio: '',
     joinDate: '2020-11-01',
-    skills: ['Deco Mesh Ağları', 'Enterprise Switchler', 'Hızlı Kurulum (FCR)', 'VoIP Sistemleri'],
+    skills: [],
   },
   {
     id: 'staff-4',
     name: 'Zeynep Nur Durmaz',
-    title: 'Müşteri Deneyimi & Ağ Destek Uzmanı',
-    role: 'Customer Experience Specialist',
-    avatar: '/avatars/zeynep_durmaz.jpg',
+    title: 'Müşteri Temsilcisi',
+    role: 'Müşteri Temsilcisi',
+    avatar: zeynepAvatar,
     email: 'zeynep.durmaz@callcenter.com',
     extension: '4104',
     status: 'acw',
     color: '#ec4899', // Pink
     bio: '',
     joinDate: '2023-01-20',
-    skills: ['Powerline Adaptörler', 'Festa Cloud', 'Mercusys Mesh', 'Kalite Güvence'],
+    skills: [],
   },
   {
     id: 'staff-5',
     name: 'Feyza Nur Sertkaya',
-    title: 'Müşteri Temsilcisi & Ürün Danışmanı',
-    role: 'Customer Care Representative',
-    avatar: '/avatars/feyza_sertkaya.jpg',
+    title: 'Müşteri Temsilcisi',
+    role: 'Müşteri Temsilcisi',
+    avatar: feyzaAvatar,
     email: 'feyzanur.sertkaya@callcenter.com',
     extension: '4105',
     status: 'in-call',
     color: '#10b981', // Emerald
     bio: '',
     joinDate: '2023-06-01',
-    skills: ['Wi-Fi 7 Routerlar', 'Servis & RMA Bilgi', 'Tapo Güvenlik', 'İlk Çağrı Memnuniyeti'],
+    skills: [],
   },
   {
     id: 'staff-6',
     name: 'Aynzeliha Şahin',
-    title: 'Müşteri Hizmetleri & Çağrı Danışmanı',
-    role: 'Customer Care Specialist',
-    avatar: '/avatars/aynzeliha_sahin.jpg',
+    title: 'Müşteri Temsilcisi',
+    role: 'Müşteri Temsilcisi',
+    avatar: aynzelihaAvatar,
     email: 'aynzeliha.sahin@callcenter.com',
     extension: '4106',
     status: 'available',
     color: '#f59e0b', // Amber
     bio: '',
     joinDate: '2022-09-01',
-    skills: ['Müşteri Memnuniyeti', 'Hızlı Teşhis', 'Tapo Destek', 'İlk Temas Çözümü'],
+    skills: [],
   },
 ];
 
@@ -452,8 +459,8 @@ export function deduplicateStaffList(list: StaffMember[]): StaffMember[] {
       result[existingIndex] = {
         ...existing,
         name: preferMemberName ? member.name : (existing.name.length >= member.name.length ? existing.name : toTitleCaseTR(member.name)),
-        title: existing.title || member.title,
-        role: existing.role || member.role,
+        title: 'Müşteri Temsilcisi',
+        role: 'Müşteri Temsilcisi',
         avatar: existing.avatar || member.avatar,
         email: existing.email || member.email,
         extension: existing.extension || member.extension,
@@ -464,6 +471,8 @@ export function deduplicateStaffList(list: StaffMember[]): StaffMember[] {
       result.push({
         ...member,
         name: toTitleCaseTR(member.name),
+        title: 'Müşteri Temsilcisi',
+        role: 'Müşteri Temsilcisi',
         bio: sanitizeBio(member.bio),
       });
     }
@@ -637,8 +646,7 @@ export function extractStaffFromRecords(records: CallRecord[], existingStaff: St
            (s.email && group.email && s.email.toLowerCase().trim() === group.email.toLowerCase().trim())
     );
 
-    const skills = Array.from(group.categories).slice(0, 4);
-    if (skills.length === 0) skills.push('Ağ Teknolojileri', 'Teknik Destek');
+    const skills: string[] = [];
 
     if (existing && !usedIds.has(existing.id)) {
       usedIds.add(existing.id);
@@ -653,10 +661,12 @@ export function extractStaffFromRecords(records: CallRecord[], existingStaff: St
       staffList.push({
         ...existing,
         name: existing.name || group.canonicalName,
+        title: 'Müşteri Temsilcisi',
+        role: 'Müşteri Temsilcisi',
         avatar: avatarToUse,
         email: group.email || existing.email,
         extension: group.extension || existing.extension,
-        skills: existing.skills && existing.skills.length > 0 ? existing.skills : skills,
+        skills: existing.skills || [],
       });
       return;
     }
@@ -670,17 +680,7 @@ export function extractStaffFromRecords(records: CallRecord[], existingStaff: St
     }
     usedIds.add(candidateId);
 
-    const title = idx === 0 
-      ? 'Kıdemli Çağrı & Destek Uzmanı'
-      : idx === 1 
-      ? 'Ağ & Sistem Çözüm Danışmanı'
-      : idx === 2 
-      ? 'Müşteri Deneyimi & Kurulum Uzmanı'
-      : idx === 3 
-      ? 'Teknik Destek & Donanım Teşhis Uzmanı'
-      : idx === 4 
-      ? 'Smart Destek & Çağrı Danışmanı'
-      : 'L2 İleri Düzey Eskalasyon Uzmanı';
+    const title = 'Müşteri Temsilcisi';
 
     const cleanEmail = normalizeText(group.canonicalName).replace(/\s+/g, '.') || `staff${idx + 1}`;
     const associatedEmail = group.email || `${cleanEmail}@callcenter.com`;
@@ -697,15 +697,15 @@ export function extractStaffFromRecords(records: CallRecord[], existingStaff: St
     staffList.push({
       id: candidateId,
       name: group.canonicalName,
-      title: (existing && existing.title) || title,
-      role: (existing && existing.role) || 'Çağrı Merkezi Uzmanı',
+      title: 'Müşteri Temsilcisi',
+      role: 'Müşteri Temsilcisi',
       avatar: (existing && existing.avatar && !existing.avatar.includes('images.unsplash.com')) ? existing.avatar : defaultAvatar,
       email: (existing && existing.email) || associatedEmail,
       extension: (existing && existing.extension) || associatedExt,
       status: (existing && existing.status) || (idx % 3 === 0 ? 'in-call' : idx % 3 === 1 ? 'available' : 'acw'),
       color: (existing && existing.color) || COLOR_POOL[idx % COLOR_POOL.length],
       joinDate: (existing && existing.joinDate) || '2023-01-15',
-      skills,
+      skills: existing?.skills || [],
       bio: sanitizeBio(existing?.bio),
     });
   });

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { StaffMember, Language } from '../types';
 import { getT } from '../utils/translations';
-import { INITIAL_STAFF_MEMBERS } from '../data/defaultDatasets';
+import { INITIAL_STAFF_MEMBERS, areStaffNamesEquivalent } from '../data/defaultDatasets';
 import { X, Camera, Save, User, Mail, Phone, Tag, Check, RotateCcw, Upload } from 'lucide-react';
 
 interface StaffProfileModalProps {
@@ -37,17 +37,58 @@ export const StaffProfileModal: React.FC<StaffProfileModalProps> = ({
 
   // Find the fixed default photo for this staff member
   const defaultStaffPhoto = INITIAL_STAFF_MEMBERS.find(
-    s => s.id === staff.id || s.name.toLowerCase().trim() === staff.name.toLowerCase().trim()
+    s => s.id === staff.id || 
+         areStaffNamesEquivalent(s.name, staff.name) ||
+         s.name.toLowerCase().trim() === staff.name.toLowerCase().trim()
   )?.avatar || staff.avatar;
 
+  const isOldUnsplash = staff.avatar && (
+    staff.avatar.includes('images.unsplash.com') ||
+    staff.avatar.includes('unsplash')
+  );
+  const initialAvatar = (!staff.avatar || isOldUnsplash) ? defaultStaffPhoto : staff.avatar;
+
+  // Filter out any lingering mock template titles/roles
+  const mockTitlesList = [
+    'kıdemli teknik destek uzmanı',
+    'ağ & sistem destek mühendisi',
+    'ağ ve sistem destek mühendisi',
+    'kurumsal çözüm & çağrı lideri',
+    'müşteri deneyimi & ağ destek uzmanı',
+    'müşteri temsilcisi & ürün danışmanı',
+    'müşteri hizmetleri & çağrı danışmanı',
+    'senior technical support',
+    'network support engineer',
+    'enterprise solutions lead',
+    'customer experience specialist',
+    'customer care representative',
+    'customer care specialist'
+  ];
+  const currentTitleLower = (staff.title || '').toLowerCase().trim();
+  const currentRoleLower = (staff.role || '').toLowerCase().trim();
+  // If previous title was one of the old mock titles (e.g. Ağ Destek Mühendisi), reset it to default 'Müşteri Temsilcisi'
+  // If user sets a custom title, keep it. If empty, default to 'Müşteri Temsilcisi'.
+  const isOldMock = mockTitlesList.some(m => currentTitleLower.includes(m));
+  const cleanTitle = (isOldMock || !staff.title) ? 'Müşteri Temsilcisi' : staff.title;
+  const cleanRole = (isOldMock || !staff.role) ? 'Müşteri Temsilcisi' : staff.role;
+
+  // Filter out lingering mock template skills
+  const cleanSkills = (staff.skills || []).filter(s => {
+    const lower = s.toLowerCase();
+    return !(
+      lower.includes('omada') || lower.includes('dsl') || lower.includes('tapo') || 
+      lower.includes('deco') || lower.includes('mesh') || lower.includes('memnuniyeti') ||
+      lower.includes('powerline') || lower.includes('festa') || lower.includes('mercusys') ||
+      lower.includes('router') || lower.includes('rma') || lower.includes('fcr')
+    );
+  });
+
   const [name, setName] = useState(staff.name);
-  const [title, setTitle] = useState(staff.title);
-  const [role, setRole] = useState(staff.role);
   const [email, setEmail] = useState(staff.email);
   const [extension, setExtension] = useState(staff.extension);
-  const [avatar, setAvatar] = useState(staff.avatar || defaultStaffPhoto);
+  const [avatar, setAvatar] = useState(initialAvatar);
   const [bio, setBio] = useState(staff.bio || '');
-  const [skillsStr, setSkillsStr] = useState(staff.skills.join(', '));
+  const [skillsStr, setSkillsStr] = useState(cleanSkills.join(', '));
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,8 +108,8 @@ export const StaffProfileModal: React.FC<StaffProfileModalProps> = ({
     const updated: StaffMember = {
       ...staff,
       name,
-      title,
-      role,
+      title: 'Müşteri Temsilcisi',
+      role: 'Müşteri Temsilcisi',
       email,
       extension,
       avatar,
@@ -81,7 +122,7 @@ export const StaffProfileModal: React.FC<StaffProfileModalProps> = ({
     setTimeout(() => {
       setSavedSuccess(false);
       onClose();
-    }, 600);
+    }, 400);
   };
 
   return (
@@ -209,15 +250,6 @@ export const StaffProfileModal: React.FC<StaffProfileModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Unvan</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white font-medium focus:outline-hidden focus:border-cyan-400"
-              />
-            </div>
-            <div>
               <label className="block text-slate-300 font-semibold mb-1">Dahili No</label>
               <input
                 type="text"
@@ -226,16 +258,15 @@ export const StaffProfileModal: React.FC<StaffProfileModalProps> = ({
                 className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white font-medium focus:outline-hidden focus:border-cyan-400"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-slate-300 font-semibold mb-1">E-Posta</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white font-medium focus:outline-hidden focus:border-cyan-400"
-            />
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">E-Posta</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white font-medium focus:outline-hidden focus:border-cyan-400"
+              />
+            </div>
           </div>
 
           <div>

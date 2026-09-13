@@ -223,7 +223,7 @@ export const ComparisonMatrixView: React.FC<ComparisonMatrixViewProps> = ({
                 >
                   <option value="">Personel Seçiniz</option>
                   {staffList.map((s, idx) => (
-                    <option key={`opt-staff1-${s.id}-${idx}`} value={s.id}>{s.name} ({s.role})</option>
+                    <option key={`opt-staff1-${s.id}-${idx}`} value={s.id}>{s.name} - {s.title || 'Müşteri Temsilcisi'}</option>
                   ))}
                 </select>
               </div>
@@ -239,7 +239,7 @@ export const ComparisonMatrixView: React.FC<ComparisonMatrixViewProps> = ({
                   />
                   <div>
                     <h3 className="text-sm font-bold text-white">{staff1.name}</h3>
-                    <p className="text-xs text-slate-400">{staff1.title}</p>
+                    <p className="text-xs text-slate-400">{staff1.title || 'Müşteri Temsilcisi'}</p>
                     <span className="inline-block mt-1 text-[11px] font-mono font-bold text-cyan-300">
                       KPI: %{kpi1.overallScore} | AHT: {kpi1.ahtAvg}sn
                     </span>
@@ -293,7 +293,7 @@ export const ComparisonMatrixView: React.FC<ComparisonMatrixViewProps> = ({
                 >
                   <option value="">Personel Seçiniz</option>
                   {secondaryStaffOptions.map((s, idx) => (
-                    <option key={`opt-staff2-${s.id}-${idx}`} value={s.id}>{s.name} ({s.role})</option>
+                    <option key={`opt-staff2-${s.id}-${idx}`} value={s.id}>{s.name} - {s.title || 'Müşteri Temsilcisi'}</option>
                   ))}
                 </select>
               </div>
@@ -309,7 +309,7 @@ export const ComparisonMatrixView: React.FC<ComparisonMatrixViewProps> = ({
                   />
                   <div>
                     <h3 className="text-sm font-bold text-white">{staff2.name}</h3>
-                    <p className="text-xs text-slate-400">{staff2.title}</p>
+                    <p className="text-xs text-slate-400">{staff2.title || 'Müşteri Temsilcisi'}</p>
                     <span className="inline-block mt-1 text-[11px] font-mono font-bold text-pink-300">
                       KPI: %{kpi2.overallScore} | AHT: {kpi2.ahtAvg}sn
                     </span>

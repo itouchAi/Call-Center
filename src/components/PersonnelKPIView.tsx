@@ -16,8 +16,9 @@ import {
   BarChart2, ShieldCheck, UserCheck, PhoneCall,
   Sparkles, Layers, ChevronRight, Calendar,
   Coffee, Utensils, Users, GraduationCap, Zap,
-  Maximize2, Search, X
+  Maximize2, Search, X, RotateCcw
 } from 'lucide-react';
+import { resetStaffToFixedPortraits } from '../utils/storageAndSecurity';
 
 interface PersonnelKPIViewProps {
   staffList: StaffMember[];
@@ -67,10 +68,15 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
 
   // Staff Selection Modal State (User Rule: Up to 6 staff members shown on main screen, "Tüm Liste" button to select)
   const [isStaffSelectModalOpen, setIsStaffSelectModalOpen] = useState<boolean>(false);
+  const [portraitResetNotice, setPortraitResetNotice] = useState<string | null>(null);
+
   const [localDisplayedIds, setLocalDisplayedIds] = useState<string[]>(() => {
     if (displayedStaffIds && displayedStaffIds.length > 0) {
       return displayedStaffIds.slice(0, 6);
     }
+    const coreOrder = ['staff-3', 'staff-2', 'staff-6', 'staff-4', 'staff-1', 'staff-5'];
+    const matchedCore = coreOrder.filter(id => staffList.some(s => s.id === id));
+    if (matchedCore.length === 6) return matchedCore;
     return staffList.slice(0, 6).map(s => s.id);
   });
 
@@ -85,9 +91,30 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
     const matched = localDisplayedIds
       .map(id => staffList.find(s => s.id === id))
       .filter((s): s is StaffMember => Boolean(s));
-    if (matched.length > 0) return matched.slice(0, 6);
+    if (matched.length === 6) return matched;
+
+    const coreOrder = ['staff-3', 'staff-2', 'staff-6', 'staff-4', 'staff-1', 'staff-5'];
+    const matchedCore = coreOrder
+      .map(id => staffList.find(s => s.id === id))
+      .filter((s): s is StaffMember => Boolean(s));
+    if (matchedCore.length === 6) return matchedCore;
+
     return staffList.slice(0, 6);
   }, [staffList, localDisplayedIds]);
+
+  const handleDirectResetPortraits = () => {
+    const updated = resetStaffToFixedPortraits(staffList);
+    if (onUpdateStaffList) {
+      onUpdateStaffList(updated);
+    }
+    const coreOrder = ['staff-3', 'staff-2', 'staff-6', 'staff-4', 'staff-1', 'staff-5'];
+    setLocalDisplayedIds(coreOrder);
+    if (onUpdateDisplayedStaffIds) {
+      onUpdateDisplayedStaffIds(coreOrder);
+    }
+    setPortraitResetNotice('6 temsilcinin orijinal sabit fotoğrafları yüklendi!');
+    setTimeout(() => setPortraitResetNotice(null), 3000);
+  };
 
   const handleSaveStaffSelection = (newIds: string[]) => {
     setLocalDisplayedIds(newIds);
@@ -423,12 +450,21 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
             </div>
             <button
               type="button"
+              onClick={handleDirectResetPortraits}
+              className="flex items-center space-x-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/60 hover:bg-emerald-900/80 px-2.5 py-1 text-xs font-semibold text-emerald-300 hover:text-white transition-all shadow-sm shadow-emerald-500/10 active:scale-95"
+              title="6 temsilcinin orijinal sabit fotoğraflarını yükler ve sabitler"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Görselleri Sabitle / Sıfırla</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setIsBulkAvatarModalOpen(true)}
               className="flex items-center space-x-1.5 rounded-lg border border-cyan-500/40 bg-cyan-950/60 hover:bg-cyan-900/80 px-2.5 py-1 text-xs font-semibold text-cyan-300 hover:text-white transition-all shadow-sm shadow-cyan-500/10 active:scale-95"
-              title="Temsilcilerin profil fotoğraflarını toplu yükleyin ve eşleştirin"
+              title="Bilgisayarınızdan yeni temsilci fotoğrafları yükleyin ve sabitleyin"
             >
               <Camera className="h-3.5 w-3.5 text-cyan-400" />
-              <span>Fotoğrafları Sabitle</span>
+              <span>Görsel Yükle</span>
             </button>
             {staffList.length > 6 && (
               <button
@@ -445,6 +481,12 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
               </button>
             )}
           </div>
+          {portraitResetNotice && (
+            <div className="flex items-center space-x-1.5 text-xs text-emerald-400 font-semibold px-2.5 py-1 bg-emerald-950/60 border border-emerald-500/30 rounded-lg animate-in fade-in">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+              <span>{portraitResetNotice}</span>
+            </div>
+          )}
           <div className="flex items-center space-x-1.5 rounded-xl border border-white/10 bg-slate-900/60 p-1 backdrop-blur-md">
             {/* Haftalık Filter Button */}
             <button
@@ -523,7 +565,7 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
 
                   <div className="w-full">
                     <h4 className="text-xs font-bold text-white truncate">{member.name}</h4>
-                    <p className="text-[10px] text-slate-400 truncate">{member.role}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{member.title || 'Müşteri Temsilcisi'}</p>
                   </div>
 
                   <div className="flex items-center justify-between w-full pt-1.5 border-t border-white/10 text-[10px]">
@@ -573,14 +615,16 @@ export const PersonnelKPIView: React.FC<PersonnelKPIViewProps> = ({
                   Dahili: {selectedStaff.extension}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5 font-medium">{selectedStaff.title}</p>
-              <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                {selectedStaff.skills.map((skill, i) => (
-                  <span key={i} className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[10px] text-slate-300">
-                    {skill}
-                  </span>
-                ))}
-              </div>
+              <p className="text-xs text-slate-300 mt-0.5 font-medium">{selectedStaff.title || 'Müşteri Temsilcisi'}</p>
+              {selectedStaff.skills && selectedStaff.skills.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  {selectedStaff.skills.map((skill, i) => (
+                    <span key={i} className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[10px] text-slate-300">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

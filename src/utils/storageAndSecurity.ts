@@ -2,11 +2,11 @@ import { StaffMember, CallRecord, CallCenterHourlyMetric, CloudBackupData, Cache
 import { INITIAL_STAFF_MEMBERS, RAW_CRM_RECORDS, RAW_HOURLY_METRICS, deduplicateStaffList, areStaffNamesEquivalent } from '../data/defaultDatasets';
 
 const STORAGE_KEYS = {
-  STAFF: 'cc_kpi_staff_members_v2',
-  CRM_RECORDS: 'cc_kpi_crm_records_v2',
-  METRICS: 'cc_kpi_hourly_metrics_v2',
-  SETTINGS: 'cc_kpi_app_settings_v2',
-  BACKUP: 'cc_kpi_cloud_backup_v2',
+  STAFF: 'cc_kpi_staff_members_v5',
+  CRM_RECORDS: 'cc_kpi_crm_records_v5',
+  METRICS: 'cc_kpi_hourly_metrics_v5',
+  SETTINGS: 'cc_kpi_app_settings_v5',
+  BACKUP: 'cc_kpi_cloud_backup_v5',
   ENCRYPTION_KEY: 'cc_kpi_aes_vault_key',
 };
 
@@ -78,14 +78,34 @@ class MemoryCacheManager {
 
 export const cacheManager = new MemoryCacheManager();
 
+// Purge completely all local storage and in-memory caches
+export function purgeAllLocalStorage(): void {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) keysToRemove.push(key);
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {
+    console.error('Failed to purge local storage', e);
+  }
+  cacheManager.clear();
+}
+
 // Load Initial / Stored Staff
 export function loadStaffMembers(): StaffMember[] {
   try {
-    const saved = localStorage.getItem(STORAGE_KEYS.STAFF);
+    // Check current storage key
+    let saved = localStorage.getItem(STORAGE_KEYS.STAFF);
+    if (!saved) {
+      saved = localStorage.getItem('cc_kpi_staff_members_v4') || localStorage.getItem('cc_kpi_staff_members_v2');
+    }
+
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Merge with INITIAL_STAFF_MEMBERS to ensure newly registered core staff and fixed representative photos are preserved
+        // Build the 6 core staff members using the guaranteed bundled portraits
         const merged: StaffMember[] = INITIAL_STAFF_MEMBERS.map(initStaff => {
           const match = parsed.find((p: StaffMember) => 
             p.id === initStaff.id || 
@@ -93,16 +113,31 @@ export function loadStaffMembers(): StaffMember[] {
             (p.name && initStaff.name && p.name.toLowerCase().trim() === initStaff.name.toLowerCase().trim())
           );
           if (match) {
-            // If the saved avatar is an old unsplash placeholder or generic online photo, replace it with the fixed avatar
-            const isOldUnsplash = match.avatar && (
-              match.avatar.includes('images.unsplash.com') ||
-              match.avatar.includes('unsplash')
+            // ONLY keep match.avatar if it is a custom uploaded image (data URL or uploaded image path)
+            // If it's an online unsplash link or empty or old placeholder, ALWAYS use initStaff.avatar (bundled portrait)
+            const isCustomUserUpload = match.avatar && (
+              match.avatar.startsWith('data:image/') ||
+              match.avatar.startsWith('blob:')
             );
-            const finalAvatar = (!match.avatar || isOldUnsplash) ? initStaff.avatar : match.avatar;
+            const finalAvatar = isCustomUserUpload ? match.avatar : initStaff.avatar;
+
+            // Remove any old mock skills
+            const cleanSkills = Array.isArray(match.skills) ? match.skills.filter((s: string) => {
+              const lower = s.toLowerCase();
+              return !(
+                lower.includes('omada') || lower.includes('dsl') || lower.includes('tapo') || 
+                lower.includes('deco') || lower.includes('mesh') || lower.includes('memnuniyeti') ||
+                lower.includes('powerline') || lower.includes('festa') || lower.includes('mercusys') ||
+                lower.includes('router') || lower.includes('rma') || lower.includes('fcr')
+              );
+            }) : [];
 
             return {
               ...initStaff,
               ...match,
+              title: 'Müşteri Temsilcisi',
+              role: 'Müşteri Temsilcisi',
+              skills: cleanSkills,
               name: initStaff.name, // Keep canonical staff name
               avatar: finalAvatar,
             };
@@ -110,10 +145,15 @@ export function loadStaffMembers(): StaffMember[] {
           return initStaff;
         });
 
-        // Also keep any custom staff members user might have added (that aren't the core 6)
+        // Also keep any non-core custom staff members user might have added
         parsed.forEach((p: StaffMember) => {
-          if (!merged.some(m => m.id === p.id || areStaffNamesEquivalent(m.name, p.name))) {
-            merged.push(p);
+          const isCore = merged.some(m => m.id === p.id || areStaffNamesEquivalent(m.name, p.name));
+          if (!isCore && p.name && p.name !== 'Aynzeliha Kalındaş') {
+            merged.push({
+              ...p,
+              title: 'Müşteri Temsilcisi',
+              role: 'Müşteri Temsilcisi',
+            });
           }
         });
 
@@ -129,7 +169,45 @@ export function loadStaffMembers(): StaffMember[] {
   } catch (e) {
     console.error('Failed to parse staff from local storage', e);
   }
-  return deduplicateStaffList(INITIAL_STAFF_MEMBERS);
+  const defaultList = deduplicateStaffList(INITIAL_STAFF_MEMBERS).map(s => ({
+    ...s,
+    title: 'Müşteri Temsilcisi',
+    role: 'Müşteri Temsilcisi',
+    skills: [],
+  }));
+  try {
+    localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(defaultList));
+  } catch {}
+  return defaultList;
+}
+
+// Explicit function to reset all core staff avatars to their fixed portraits
+export function resetStaffToFixedPortraits(currentStaff: StaffMember[]): StaffMember[] {
+  const updated = currentStaff.map(s => {
+    const initMatch = INITIAL_STAFF_MEMBERS.find(
+      im => im.id === s.id || areStaffNamesEquivalent(im.name, s.name)
+    );
+    if (initMatch) {
+      return {
+        ...s,
+        name: initMatch.name,
+        avatar: initMatch.avatar,
+        title: 'Müşteri Temsilcisi',
+        role: 'Müşteri Temsilcisi',
+        skills: [],
+      };
+    }
+    return {
+      ...s,
+      title: 'Müşteri Temsilcisi',
+      role: 'Müşteri Temsilcisi',
+    };
+  });
+
+  try {
+    localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(updated));
+  } catch {}
+  return updated;
 }
 
 export function saveStaffMembers(staff: StaffMember[]): void {

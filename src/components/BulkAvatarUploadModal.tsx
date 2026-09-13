@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { StaffMember } from '../types';
 import { areStaffNamesEquivalent } from '../data/defaultDatasets';
-import { X, Upload, CheckCircle2, AlertCircle, Camera, Check, RefreshCw } from 'lucide-react';
+import { resetStaffToFixedPortraits } from '../utils/storageAndSecurity';
+import { X, Upload, CheckCircle2, AlertCircle, Camera, Check, RefreshCw, RotateCcw } from 'lucide-react';
 
 interface BulkAvatarUploadModalProps {
   isOpen: boolean;
@@ -300,27 +301,46 @@ export const BulkAvatarUploadModal: React.FC<BulkAvatarUploadModalProps> = ({
         )}
 
         {/* Footer Actions */}
-        <div className="mt-6 flex items-center justify-end space-x-3 pt-4 border-t border-white/10">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/10">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+            onClick={() => {
+              const updated = resetStaffToFixedPortraits(staffList);
+              onSaveStaffList(updated);
+              setSuccessMessage('6 temsilcinin orijinal sabit portreleri başarıyla uygulandı.');
+              setTimeout(() => {
+                onClose();
+              }, 1200);
+            }}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-white/10 transition-colors"
+            title="Sisteme kayıtlı 6 temsilcinin orijinal sabit portrelerini geri yükler"
           >
-            Vazgeç
+            <RotateCcw className="h-3.5 w-3.5 text-cyan-400" />
+            <span>Varsayılan Sabit Portreleri Uygula</span>
           </button>
-          <button
-            type="button"
-            onClick={handleSaveAll}
-            disabled={matchCount === 0}
-            className={`flex items-center space-x-2 px-5 py-2 rounded-xl text-xs font-bold transition-all ${
-              matchCount > 0
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/30'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            <Check className="h-4 w-4" />
-            <span>Fotoğrafları Sabitle ({matchCount})</span>
-          </button>
+
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+            >
+              Vazgeç
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              disabled={matchCount === 0}
+              className={`flex items-center space-x-2 px-5 py-2 rounded-xl text-xs font-bold transition-all ${
+                matchCount > 0
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/30'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              <Check className="h-4 w-4" />
+              <span>Fotoğrafları Sabitle ({matchCount})</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

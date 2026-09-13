@@ -295,7 +295,7 @@ export const StaffSelectionModal: React.FC<StaffSelectionModalProps> = ({
                           {staff.name}
                         </h4>
                         <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
-                          {staff.title || staff.role || 'Çağrı Merkezi Uzmanı'}
+                          {staff.title || 'Müşteri Temsilcisi'}
                         </p>
                       </div>
 

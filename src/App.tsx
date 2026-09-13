@@ -12,7 +12,8 @@ import {
   loadCRMRecords, saveCRMRecords, 
   loadHourlyMetrics, saveHourlyMetrics, 
   loadAppSettings, saveAppSettings,
-  getCloudBackupInfo, triggerCloudAutoBackup
+  getCloudBackupInfo, triggerCloudAutoBackup,
+  purgeAllLocalStorage
 } from './utils/storageAndSecurity';
 import { INITIAL_STAFF_MEMBERS, RAW_CRM_RECORDS, RAW_HOURLY_METRICS, extractStaffFromRecords } from './data/defaultDatasets';
 import { deriveHourlyMetricsFromCRM } from './utils/excelParser';
@@ -32,15 +33,15 @@ import { Cpu, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
 const FALLBACK_STAFF: StaffMember = {
   id: 'staff-fallback',
   name: 'Seçili Personel Yok',
-  title: 'Teknik Destek Uzmanı',
-  role: 'Destek Danışmanı',
+  title: 'Müşteri Temsilcisi',
+  role: 'Müşteri Temsilcisi',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   email: 'destek@callcenter.com',
   extension: '4100',
   status: 'available',
   color: '#06b6d4',
   joinDate: '2023-01-01',
-  skills: ['Ağ Teknolojileri', 'Teknik Destek'],
+  skills: [],
   bio: '',
 };
 
@@ -217,14 +218,23 @@ export default function App() {
     setIsRecalculating(true);
     setRecalcNotice('Tüm veriler varsayılan fabrika ayarlarına sıfırlanıyor ve yeniden hesaplanıyor...');
 
+    // Fully purge any lingering legacy storage and cache
+    purgeAllLocalStorage();
+
     setTimeout(() => {
-      setStaffList(INITIAL_STAFF_MEMBERS);
-      saveStaffMembers(INITIAL_STAFF_MEMBERS);
+      const resetStaff = INITIAL_STAFF_MEMBERS.map(s => ({
+        ...s,
+        title: 'Müşteri Temsilcisi',
+        role: 'Müşteri Temsilcisi',
+        skills: [],
+      }));
+      setStaffList(resetStaff);
+      saveStaffMembers(resetStaff);
       setCrmRecords(RAW_CRM_RECORDS);
       saveCRMRecords(RAW_CRM_RECORDS);
       setHourlyMetrics(RAW_HOURLY_METRICS);
       saveHourlyMetrics(RAW_HOURLY_METRICS);
-      const defaultDisplayed = INITIAL_STAFF_MEMBERS.map(s => s.id);
+      const defaultDisplayed = resetStaff.map(s => s.id);
       setDisplayedStaffIds(defaultDisplayed);
       setSettings(prev => ({
         ...prev,
@@ -249,6 +259,9 @@ export default function App() {
   const handleClearAllData = () => {
     setIsRecalculating(true);
     setRecalcNotice('Tüm veriler sıfırlanıyor ve temizleniyor...');
+
+    // Fully purge any lingering legacy storage and cache
+    purgeAllLocalStorage();
 
     setTimeout(() => {
       setCrmRecords([]);
